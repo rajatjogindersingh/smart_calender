@@ -3,6 +3,9 @@ from app.model.user import User, UserSchema
 from flask import request, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
+import jwt
+import datetime
+from app import app
 
 
 class UserRegistrationService(Resource):
@@ -60,10 +63,13 @@ class UserLoginService(Resource):
             if not check_password_hash(user_data.password, post_data["password"]):
                 raise Exception("Invalid password")
 
+            token = jwt.encode({'email': post_data['email'],
+                                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+                               key=app.config.get('SECRET_KEY'))
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
-        msg = {"message": "Login Successful"}
+        msg = {"token": token.decode('UTF-8')}
         status = 200
 
         return Response(response=json.dumps(msg), status=status, content_type="application/json")
