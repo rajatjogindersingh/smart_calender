@@ -86,22 +86,34 @@ class UserAvailabilityService(Resource):
         """
         try:
             post_data = json.loads(request.data)
+            user_info = g.user_info
 
+            post_data['id'] = str(user_info.id)
             # To check for mandatory login fields
-            mandatory_fields = ["user_id", "availability_date", "available_slots"]
+            mandatory_fields = ["availability_date", "available_slots"]
             if not all(i in post_data for i in mandatory_fields):
                 raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
 
             slot_schema = UserAvailableSlotsSchema()
-            post_data['id'] = post_data['user_id']
             slots, err_msg = slot_schema.load(post_data)
             if not err_msg:
-                slots.save()
+                if not UserAvailableSlots.objects(user_id=post_data['id'],
+                                                  availability_date=slots.availability_date):
+                    slots.save()
+                else:
+                    check_slots = UserAvailableSlots.objects.get(user_id=post_data['user_id'],
+                                                                 availability_date=slots.availability_date)
+                    for slot in check_slots.available_slots:
+                        for new_slot in slots.available_slots:
+                            if slot.start_time == new_slot.start_time:
+                                raise Exception('{} overlapping start time'.format(str(new_slot.start_time)))
+                    check_slots.available_slots += slots.available_slots
+                    check_slots.save()
 
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
-        msg = {"message": "Added Successfully"}
-        status = 201
+        msg = err_msg if err_msg else {"message": "Added Successfully"}
+        status = 400 if err_msg else 201
 
         return Response(response=json.dumps(msg), status=status, content_type="application/json")
