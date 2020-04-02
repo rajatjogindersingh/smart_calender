@@ -1,6 +1,6 @@
 from flask_restful import Resource
-from app.model.user import User, UserSchema
-from flask import request, Response
+from app.model.user import User, UserSchema, UserAvailableSlots, UserAvailableSlotsSchema, Slots
+from flask import request, Response, g
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import jwt
@@ -71,5 +71,37 @@ class UserLoginService(Resource):
 
         msg = {"token": token.decode('UTF-8')}
         status = 200
+
+        return Response(response=json.dumps(msg), status=status, content_type="application/json")
+
+
+class UserAvailabilityService(Resource):
+    """
+    The Base class used for by user to set the availability slots
+    """
+    def post(self):
+        """
+        This function is used to mark all available slots user
+        :return: Flask Response
+        """
+        try:
+            post_data = json.loads(request.data)
+
+            # To check for mandatory login fields
+            mandatory_fields = ["user_id", "availability_date", "available_slots"]
+            if not all(i in post_data for i in mandatory_fields):
+                raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
+
+            slot_schema = UserAvailableSlotsSchema()
+            post_data['id'] = post_data['user_id']
+            slots, err_msg = slot_schema.load(post_data)
+            if not err_msg:
+                slots.save()
+
+        except Exception as e:
+            return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
+
+        msg = {"message": "Added Successfully"}
+        status = 201
 
         return Response(response=json.dumps(msg), status=status, content_type="application/json")

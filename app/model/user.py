@@ -14,3 +14,19 @@ class UserSchema(ma.ModelSchema):
         model = User
 
     password = ma.fields.String(load_only=True)
+
+
+class Slots(db.EmbeddedDocument):
+    start_time = db.DateTimeField(required=True)
+    end_time = db.DateTimeField(required=True)
+
+
+class UserAvailableSlots(db.Document):
+    user_id = db.ReferenceField(User, required=True)
+    availability_date = db.DateTimeField(required=True, unique_with='user_id')
+    available_slots = db.EmbeddedDocumentListField(Slots)
+
+
+class UserAvailableSlotsSchema(ma.ModelSchema):
+    class Meta:
+        model = UserAvailableSlots
