@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from app.model.user import User, UserSchema, UserAvailableSlots, UserAvailableSlotsSchema, Slots
+from app.model.user import User, UserSchema, UserAvailableSlots, UserAvailableSlotsSchema, SlotsSchema
 from flask import request, Response, g
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
@@ -116,4 +116,43 @@ class UserAvailabilityService(Resource):
         msg = err_msg if err_msg else {"message": "Added Successfully"}
         status = 400 if err_msg else 201
 
+        return Response(response=json.dumps(msg), status=status, content_type="application/json")
+
+
+class CheckUserSlot(Resource):
+    """
+    This is base class for all booking related actions (like checking available slots)
+    """
+    def get(self):
+        try:
+            query = request.args
+
+            mandatory_fields = ["email", "date"]
+            if not all(i in query for i in mandatory_fields):
+                raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
+
+            # To check validity of the user
+            check_user = User.objects(email=query['email'])
+            if not check_user:
+                raise Exception("No user with email id {} exists".format(query['email']))
+
+            # To check if that user has marked available slots for that day
+            availability_date = datetime.datetime.strptime(query['date'], "%Y-%m-%d")
+            user_data = UserAvailableSlots.objects(user_id=str(check_user[0].id), availability_date=availability_date,
+                                                   available_slots__exists=True)
+            if not user_data:
+                raise Exception("User has not marked availability for this date")
+
+            user_data = user_data[0]
+            slots = user_data.available_slots
+
+            slots = sorted(slots, key=lambda slot_obj: slot_obj.start_time)
+            slots_schema = SlotsSchema()
+            slots, err_msg = slots_schema.dump(slots, many=True)
+
+        except Exception as e:
+            return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
+
+        msg = err_msg if err_msg else slots
+        status = 400 if err_msg else 200
         return Response(response=json.dumps(msg), status=status, content_type="application/json")

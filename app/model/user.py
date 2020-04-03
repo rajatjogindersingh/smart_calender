@@ -21,6 +21,22 @@ class Slots(db.EmbeddedDocument):
     end_time = db.DateTimeField(required=True)
 
 
+class SlotsSchema(ma.ModelSchema):
+    class Meta:
+        model = Slots
+
+    start_time = ma.fields.Method(serialize="change_start_datetime_format")
+    end_time = ma.fields.Method(serialize="change_end_datetime_format")
+
+    def change_start_datetime_format(self, obj):
+        date_time = (obj.start_time).time()
+        return str(date_time)
+
+    def change_end_datetime_format(self, obj):
+        date_time = (obj.end_time).time()
+        return str(date_time)
+
+
 class UserAvailableSlots(db.Document):
     user_id = db.ReferenceField(User, required=True)
     availability_date = db.DateTimeField(required=True, unique_with='user_id')
