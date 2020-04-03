@@ -1,5 +1,6 @@
 import mongoengine as db
 import marshmallow_mongoengine as ma
+import datetime
 
 
 class User(db.Document):
@@ -43,6 +44,21 @@ class UserAvailableSlots(db.Document):
     user = db.ReferenceField(User, required=True)
     availability_date = db.DateTimeField(required=True, unique_with='user')
     available_slots = db.EmbeddedDocumentListField(Slots)
+
+    def save(self, force_insert=False, validate=True, clean=True,
+             write_concern=None, cascade=None, cascade_kwargs=None,
+             _refs=None, save_condition=None, signal_kwargs=None, **kwargs):
+
+        curr = datetime.datetime.now()
+        if not getattr(self, id) and self.availability_date.date() < curr.date():
+            raise Exception('Expired availability_date')
+
+        if getattr(self, 'available_slots') and self.available_slots:
+            for slot in self.available_slots:
+                if slot.start_time >= slot.end_time:
+                    raise Exception('Start time has to be less than end time')
+
+        super(UserAvailableSlots, self).save()
 
 
 class UserAvailableSlotsSchema(ma.ModelSchema):
