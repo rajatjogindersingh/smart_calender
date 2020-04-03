@@ -94,6 +94,10 @@ class UserAvailabilityService(Resource):
             if not all(i in post_data for i in mandatory_fields):
                 raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
 
+            for slot in post_data['available_slots']:
+                slot['start_time'] = str(datetime.datetime.strptime(slot['start_time'], "%H:%M:%S"))
+                slot['end_time'] = str(datetime.datetime.strptime(slot['end_time'], "%H:%M:%S"))
+
             slot_schema = UserAvailableSlotsSchema()
             slots, err_msg = slot_schema.load(post_data)
             if not err_msg:
@@ -185,6 +189,10 @@ class BookUserSlot(Resource):
 
             start_time = datetime.datetime.strptime(post_data['slot']['start_time'], "%H:%M:%S")
             end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
+
+            # To make sure booking happens only for future
+            if start_time.time() < datetime.datetime.now().time():
+                raise Exception('You cannot go in past')
 
             # To check your own schedule at that time
             self_slot_check = UserAvailableSlots.objects(user=str(user_info.id), availability_date=availability_date,
