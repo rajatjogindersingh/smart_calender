@@ -98,6 +98,7 @@ class UserAvailabilityService(Resource):
                 slot['start_time'] = str(datetime.datetime.strptime(slot['start_time'], "%H:%M:%S"))
                 slot['end_time'] = str(datetime.datetime.strptime(slot['end_time'], "%H:%M:%S"))
 
+            post_data['availability_date'] = str(datetime.datetime.strptime(post_data['availability_date'], "%Y-%m-%d"))
             slot_schema = UserAvailableSlotsSchema()
             slots, err_msg = slot_schema.load(post_data)
             if not err_msg:
@@ -150,6 +151,11 @@ class CheckUserSlot(Resource):
             user_data = user_data[0]
             slots = user_data.available_slots
             slots = [i for i in slots if not getattr(i, 'user')]
+
+            # To check if any slot is available
+            if not slots:
+                raise Exception('No slots available')
+
             slots = sorted(slots, key=lambda slot_obj: slot_obj.start_time)
             slots_schema = SlotsSchema()
             slots, err_msg = slots_schema.dump(slots, many=True)
@@ -191,7 +197,7 @@ class BookUserSlot(Resource):
             end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
 
             # To make sure booking happens only for future
-            if availability_date < datetime.datetime.now().date() and \
+            if availability_date.date() < datetime.datetime.now().date() and \
                     start_time.time() < datetime.datetime.now().time():
                 raise Exception('You cannot go in past')
 
@@ -209,7 +215,7 @@ class BookUserSlot(Resource):
                                                                             'end_time': end_time,
                                                                             'user': None})
             if not slot_check:
-                raise Exception('Slot already booked')
+                raise Exception('Slot not available or already booked')
 
             all_slots = slot_check[0]
 
