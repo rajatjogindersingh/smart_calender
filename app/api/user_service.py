@@ -88,7 +88,7 @@ class UserAvailabilityService(Resource):
             post_data = json.loads(request.data)
             user_info = g.user_info
 
-            post_data['id'] = str(user_info.id)
+            post_data['user'] = str(user_info.id)
             # To check for mandatory login fields
             mandatory_fields = ["availability_date", "available_slots"]
             if not all(i in post_data for i in mandatory_fields):
@@ -97,11 +97,11 @@ class UserAvailabilityService(Resource):
             slot_schema = UserAvailableSlotsSchema()
             slots, err_msg = slot_schema.load(post_data)
             if not err_msg:
-                if not UserAvailableSlots.objects(user_id=post_data['id'],
+                if not UserAvailableSlots.objects(user=post_data['user'],
                                                   availability_date=slots.availability_date):
                     slots.save()
                 else:
-                    check_slots = UserAvailableSlots.objects.get(user_id=post_data['user_id'],
+                    check_slots = UserAvailableSlots.objects.get(user=post_data['user'],
                                                                  availability_date=slots.availability_date)
                     for slot in check_slots.available_slots:
                         for new_slot in slots.available_slots:
@@ -121,7 +121,7 @@ class UserAvailabilityService(Resource):
 
 class CheckUserSlot(Resource):
     """
-    This is base class for all booking related actions (like checking available slots)
+    This is base class for checking available slots
     """
     def get(self):
         try:
@@ -138,14 +138,14 @@ class CheckUserSlot(Resource):
 
             # To check if that user has marked available slots for that day
             availability_date = datetime.datetime.strptime(query['date'], "%Y-%m-%d")
-            user_data = UserAvailableSlots.objects(user_id=str(check_user[0].id), availability_date=availability_date,
+            user_data = UserAvailableSlots.objects(user=str(check_user[0].id), availability_date=availability_date,
                                                    available_slots__exists=True)
             if not user_data:
                 raise Exception("User has not marked availability for this date")
 
             user_data = user_data[0]
             slots = user_data.available_slots
-
+            slots = [i for i in slots if not getattr(i, 'user')]
             slots = sorted(slots, key=lambda slot_obj: slot_obj.start_time)
             slots_schema = SlotsSchema()
             slots, err_msg = slots_schema.dump(slots, many=True)
@@ -156,3 +156,63 @@ class CheckUserSlot(Resource):
         msg = err_msg if err_msg else slots
         status = 400 if err_msg else 200
         return Response(response=json.dumps(msg), status=status, content_type="application/json")
+
+
+class BookUserSlot(Resource):
+    """
+    This is base class for booking available slots of a user
+    """
+    def post(self):
+        try:
+            post_data = json.loads(request.data)
+            user_info = g.user_info
+
+            post_data['id'] = str(user_info.id)
+
+            mandatory_fields = ["email", "date", "slot"]
+            if not all(i in post_data for i in mandatory_fields):
+                raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
+
+            # To check validity of the user
+            check_user = User.objects(email=post_data['email'])
+            if not check_user:
+                raise Exception("No user with email id {} exists".format(post_data['email']))
+
+            # To check if that user has marked available slots for that day
+            availability_date = datetime.datetime.strptime(post_data['date'], "%Y-%m-%d")
+            user_data = UserAvailableSlots.objects(user=str(check_user[0].id), availability_date=availability_date,
+                                                   available_slots__exists=True)
+            if not user_data:
+                raise Exception("User has not marked availability for this date")
+
+            start_time = datetime.datetime.strptime(post_data['slot']['start_time'], "%H:%M:%S")
+            end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
+
+            slot_check = UserAvailableSlots.objects(user=str(check_user[0].id), availability_date=availability_date,
+                                                    available_slots__match={'start_time': start_time,
+                                                                            'end_time': end_time,
+                                                                            'user': None})
+            if not slot_check:
+                raise Exception('Slot already booked')
+
+            all_slots = slot_check[0]
+            old_obj = None
+            new_obj = None
+            for slot in all_slots.available_slots:
+                if slot.start_time == start_time:
+                    old_obj = slot
+                    new_obj = slot
+                    setattr(new_obj, 'user', check_user[0])
+                    setattr(new_obj, 'booked_by', user_info)
+                    break
+
+            if old_obj:
+                all_slots.available_slots.remove(old_obj)
+                all_slots.available_slots.append(new_obj)
+                all_slots.save()
+
+        except Exception as e:
+            return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
+
+        return Response(response=json.dumps({"message": "Booked Successfully"}), status=200,
+                        content_type="application/json")

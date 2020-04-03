@@ -19,6 +19,8 @@ class UserSchema(ma.ModelSchema):
 class Slots(db.EmbeddedDocument):
     start_time = db.DateTimeField(required=True)
     end_time = db.DateTimeField(required=True)
+    user = db.ReferenceField(User, default=None)
+    booked_by = db.ReferenceField(User)
 
 
 class SlotsSchema(ma.ModelSchema):
@@ -38,8 +40,8 @@ class SlotsSchema(ma.ModelSchema):
 
 
 class UserAvailableSlots(db.Document):
-    user_id = db.ReferenceField(User, required=True)
-    availability_date = db.DateTimeField(required=True, unique_with='user_id')
+    user = db.ReferenceField(User, required=True)
+    availability_date = db.DateTimeField(required=True, unique_with='user')
     available_slots = db.EmbeddedDocumentListField(Slots)
 
 
