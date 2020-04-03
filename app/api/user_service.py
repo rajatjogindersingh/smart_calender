@@ -222,13 +222,15 @@ class BookUserSlot(Resource):
                 self_slots, err_msg = UserAvailableSlotsSchema().load({'user': str(user_info.id),
                                                                        'availability_date': availability_date})
             if old_obj:
-                all_slots.update(pull__available_slots__start_time=old_obj.start_time)
-                all_slots.update(push__available_slots=new_obj)
+                all_slots.available_slots.remove(old_obj)
+                all_slots.available_slots.append(new_obj)
                 all_slots.save()
 
                 new_obj.user = check_user[0]
-                self_slots.update(pull__available_slots__start_time=old_obj.start_time)
-                self_slots.update(push__available_slots=new_obj)
+                if getattr(self_slots, 'available_slots'):
+                    self_slots.available_slots = [i for i in self_slots.available_slots
+                                                  if i.start_time != old_obj.start_time]
+                self_slots.available_slots.append(new_obj)
                 self_slots.save()
 
         except Exception as e:

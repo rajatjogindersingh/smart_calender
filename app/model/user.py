@@ -50,7 +50,8 @@ class UserAvailableSlots(db.Document):
              _refs=None, save_condition=None, signal_kwargs=None, **kwargs):
 
         curr = datetime.datetime.now()
-        if not getattr(self, id) and self.availability_date.date() < curr.date():
+
+        if not getattr(self, 'id') and self.availability_date.date() < curr.date():
             raise Exception('Expired availability_date')
 
         if getattr(self, 'available_slots') and self.available_slots:
