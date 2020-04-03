@@ -191,7 +191,8 @@ class BookUserSlot(Resource):
             end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
 
             # To make sure booking happens only for future
-            if start_time.time() < datetime.datetime.now().time():
+            if availability_date < datetime.datetime.now().date() and \
+                    start_time.time() < datetime.datetime.now().time():
                 raise Exception('You cannot go in past')
 
             # To check your own schedule at that time
