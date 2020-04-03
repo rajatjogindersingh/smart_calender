@@ -167,8 +167,6 @@ class BookUserSlot(Resource):
             post_data = json.loads(request.data)
             user_info = g.user_info
 
-            post_data['id'] = str(user_info.id)
-
             mandatory_fields = ["email", "date", "slot"]
             if not all(i in post_data for i in mandatory_fields):
                 raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
@@ -188,6 +186,15 @@ class BookUserSlot(Resource):
             start_time = datetime.datetime.strptime(post_data['slot']['start_time'], "%H:%M:%S")
             end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
 
+            # To check your own schedule at that time
+            self_slot_check = UserAvailableSlots.objects(user=str(user_info.id), availability_date=availability_date,
+                                                         available_slots__match={'start_time': start_time,
+                                                                                 'end_time': end_time,
+                                                                                 'user__ne': None})
+            if self_slot_check:
+                raise Exception("You already have a booking at that time")
+
+            # To check if user has some schedule at that time
             slot_check = UserAvailableSlots.objects(user=str(check_user[0].id), availability_date=availability_date,
                                                     available_slots__match={'start_time': start_time,
                                                                             'end_time': end_time,
@@ -196,20 +203,33 @@ class BookUserSlot(Resource):
                 raise Exception('Slot already booked')
 
             all_slots = slot_check[0]
+
+            # To find old slot in db and replace it with new one with user id in it
             old_obj = None
             new_obj = None
             for slot in all_slots.available_slots:
                 if slot.start_time == start_time:
                     old_obj = slot
                     new_obj = slot
-                    setattr(new_obj, 'user', check_user[0])
+                    setattr(new_obj, 'user', user_info)
                     setattr(new_obj, 'booked_by', user_info)
                     break
 
+            self_slots = UserAvailableSlots.objects(user=str(user_info.id), availability_date=availability_date)
+            if self_slots:
+                self_slots = self_slots[0]
+            else:
+                self_slots, err_msg = UserAvailableSlotsSchema().load({'user': str(user_info.id),
+                                                                       'availability_date': availability_date})
             if old_obj:
-                all_slots.available_slots.remove(old_obj)
-                all_slots.available_slots.append(new_obj)
+                all_slots.update(pull__available_slots__start_time=old_obj.start_time)
+                all_slots.update(push__available_slots=new_obj)
                 all_slots.save()
+
+                new_obj.user = check_user[0]
+                self_slots.update(pull__available_slots__start_time=old_obj.start_time)
+                self_slots.update(push__available_slots=new_obj)
+                self_slots.save()
 
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
