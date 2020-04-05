@@ -22,6 +22,8 @@ class Slots(db.EmbeddedDocument):
     end_time = db.DateTimeField(required=True)
     user = db.ReferenceField(User, default=None)
     booked_by = db.ReferenceField(User)
+    summary = db.StringField()
+    description = db.StringField()
 
 
 class SlotsSchema(ma.ModelSchema):

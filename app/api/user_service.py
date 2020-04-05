@@ -178,7 +178,7 @@ class BookUserSlot(Resource):
             post_data = json.loads(request.data)
             user_info = g.user_info
 
-            mandatory_fields = ["email", "date", "slot"]
+            mandatory_fields = ["email", "date", "slot", "summary", "description"]
             if not all(i in post_data for i in mandatory_fields):
                 raise Exception("Please enter {} for processing".format(','.join(mandatory_fields)))
 
@@ -233,6 +233,8 @@ class BookUserSlot(Resource):
                     new_obj = slot
                     setattr(new_obj, 'user', user_info)
                     setattr(new_obj, 'booked_by', user_info)
+                    setattr(new_obj, 'summary', post_data['summary'])
+                    setattr(new_obj, 'description', post_data['description'])
                     break
 
             self_slots = UserAvailableSlots.objects(user=str(user_info.id), availability_date=availability_date)
