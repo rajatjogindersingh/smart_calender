@@ -8,6 +8,6 @@ from app.utililty.middleware import validate_jwt
 app = Flask(__name__)
 app.config.from_object(SmartCalenderConfig)
 app.config['SECRET_KEY'] = os.urandom(24)
-host = (app.config['HOST']).format(os.getenv('db_user_name'), os.getenv('db_password'))
-db = connect(user=os.getenv('db_user_name'), password=os.getenv('db_password'), host=host)
+host = (app.config['HOST']).format(os.environ.get('db_user_name'), os.environ.get('db_password'))
+db = connect(username=os.environ.get('db_user_name'), password=os.environ.get('db_password'), host=host)
 validate_jwt(app)
