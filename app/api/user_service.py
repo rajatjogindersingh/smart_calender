@@ -6,6 +6,7 @@ import json
 import jwt
 import datetime
 from app import app
+import threading
 
 
 class UserRegistrationService(Resource):
@@ -201,6 +202,10 @@ class BookUserSlot(Resource):
                     start_time.time() < datetime.datetime.now().time():
                 raise Exception('You cannot go in past')
 
+            # To avoid concurrency issue
+            lo = threading.Lock()
+            lo.acquire()
+
             # To check your own schedule at that time
             self_slot_check = UserAvailableSlots.objects(user=str(user_info.id), availability_date=availability_date,
                                                          available_slots__match={'start_time': start_time,
@@ -247,7 +252,7 @@ class BookUserSlot(Resource):
                                                   if i.start_time != old_obj.start_time]
                 self_slots.available_slots.append(new_obj)
                 self_slots.save()
-
+            lo.release()
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
