@@ -51,3 +51,4 @@ urllib3==1.25.8
 wcwidth==0.1.9
 Werkzeug==1.0.1
 zipp==3.1.0
+gunicorn==19.9.0
