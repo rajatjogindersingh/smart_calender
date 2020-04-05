@@ -50,6 +50,37 @@ class BasicTests(unittest.TestCase):
                                  follow_redirects=True)
         self.assertEqual(response.status_code, 400)
 
+    def test_login(self):
+        response = self.app.post('/api/user_service/register',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty", name="ABC")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post('/api/user_service/register',
+                                 data=json.dumps(dict(email="xyz@gmail.com", password="qwerty", name="XYZ")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="xyz@gmail.com", password="qwerty")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="abcxyz@gmail.com", password="qwerty")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="abc@gmail.com")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()
