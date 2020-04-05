@@ -81,6 +81,32 @@ class BasicTests(unittest.TestCase):
                                  follow_redirects=True)
         self.assertEqual(response.status_code, 400)
 
+    def test_jwt_verification(self):
+        response = self.app.post('/api/user_service/register',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty", name="ABC")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post('/api/user_service/register',
+                                 data=json.dumps(dict(email="xyz@gmail.com", password="qwerty", name="XYZ")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.get('/api/user_service/check_available_slots',
+                                follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'Authorization token missing')
+
+        response = self.app.get('/api/user_service/check_available_slots', headers={'Authorization': "dummy"},
+                                follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'Invalid token. Please log in again.')
+
 
 if __name__ == "__main__":
     unittest.main()
