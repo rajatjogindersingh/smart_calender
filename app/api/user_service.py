@@ -121,7 +121,7 @@ class UserAvailabilityService(Resource):
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
         msg = err_msg if err_msg else {"message": "Added Successfully"}
-        status = 400 if err_msg else 201
+        status = 400 if err_msg else 200
 
         return Response(response=json.dumps(msg), status=status, content_type="application/json")
 

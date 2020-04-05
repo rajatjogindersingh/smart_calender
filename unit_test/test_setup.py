@@ -92,21 +92,62 @@ class BasicTests(unittest.TestCase):
                                  follow_redirects=True)
         self.assertEqual(response.status_code, 201)
 
-        response = self.app.post('/api/user_service/login',
-                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty")),
-                                 follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-
+        # Without jwt token
         response = self.app.get('/api/user_service/check_available_slots',
                                 follow_redirects=True)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json['message'], 'Authorization token missing')
 
+        # Invalid jwt token
         response = self.app.get('/api/user_service/check_available_slots', headers={'Authorization': "dummy"},
                                 follow_redirects=True)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json['message'], 'Invalid token. Please log in again.')
 
+    def test_mark_availability_service(self):
+        response = self.app.post('/api/user_service/register',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty", name="ABC")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post('/api/user_service/login',
+                                 data=json.dumps(dict(email="abc@gmail.com", password="qwerty")),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        jwt = response.json['token']
+        response = self.app.post('/api/user_service/mark_available_slots',
+                                 data=json.dumps(dict(availability_date="2020-04-05",
+                                                      available_slots=[{"start_time": "13:00:00","end_time": "14:00:00"}])),
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'Authorization token missing')
+
+        response = self.app.post('/api/user_service/mark_available_slots',
+                                 data=json.dumps(dict(availability_date="2020-04-05",
+                                                      available_slots=[
+                                                          {"start_time": "13:00:00", "end_time": "14:00:00"}])),
+                                 headers={'Authorization': jwt},
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Overlapping range
+        response = self.app.post('/api/user_service/mark_available_slots',
+                                 data=json.dumps(dict(availability_date="2020-04-05",
+                                                      available_slots=[
+                                                          {"start_time": "13:00:00", "end_time": "14:00:00"}])),
+                                 headers={'Authorization': jwt},
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+
+        # Expired dates
+        response = self.app.post('/api/user_service/mark_available_slots',
+                                 data=json.dumps(dict(availability_date="2020-04-03",
+                                                      available_slots=[
+                                                          {"start_time": "13:00:00", "end_time": "14:00:00"}])),
+                                 headers={'Authorization': jwt},
+                                 follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
 
 if __name__ == "__main__":
     unittest.main()
