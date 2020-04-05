@@ -3,6 +3,7 @@ from main import app
 import json
 from config import SmartCalenderTestConfig
 import mongoengine as mongo
+import os
 
 
 class BasicTests(unittest.TestCase):
@@ -15,15 +16,16 @@ class BasicTests(unittest.TestCase):
     def setUp(self):
         app.config.from_object(SmartCalenderTestConfig)
         mongo.connection.disconnect()
-        self.db = mongo.connect(app.config["MONGO_DB_NAME"])
+        host = (app.config['HOST']).format(os.getenv('db_user_name'), os.getenv('db_password'))
+        self.db = mongo.connect(user=os.getenv('db_user_name'), password=os.getenv('db_password'), host=host)
         self.app = app.test_client()
         self.assertEqual(app.debug, False)
 
     # executed after each test
     def tearDown(self):
         print("tearing down")
-        mongo.connection.disconnect()
         self.db.drop_database(app.config["MONGO_DB_NAME"])
+        mongo.connection.disconnect()
 
     ###############
     #### tests ####

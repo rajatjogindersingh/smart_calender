@@ -8,5 +8,6 @@ from app.utililty.middleware import validate_jwt
 app = Flask(__name__)
 app.config.from_object(SmartCalenderConfig)
 app.config['SECRET_KEY'] = os.urandom(24)
-db = connect(app.config["MONGO_DB_NAME"])
+host = (app.config['HOST']).format(os.getenv('db_user_name'), os.getenv('db_password'))
+db = connect(user=os.getenv('db_user_name'), password=os.getenv('db_password'), host=host)
 validate_jwt(app)
