@@ -7,6 +7,7 @@ import jwt
 import datetime
 from app import app
 import threading
+from app.utililty.calender_integration import send_mail
 
 
 class UserRegistrationService(Resource):
@@ -198,7 +199,7 @@ class BookUserSlot(Resource):
             end_time = datetime.datetime.strptime(post_data['slot']['end_time'], "%H:%M:%S")
 
             # To make sure booking happens only for future
-            if availability_date.date() < datetime.datetime.now().date() and \
+            if availability_date.date() < datetime.datetime.now().date() or \
                     start_time.time() < datetime.datetime.now().time():
                 raise Exception('You cannot go in past')
 
@@ -242,19 +243,20 @@ class BookUserSlot(Resource):
                 self_slots = self_slots[0]
             else:
                 self_slots, err_msg = UserAvailableSlotsSchema().load({'user': str(user_info.id),
-                                                                       'availability_date': availability_date})
+                                                                       'availability_date': str(availability_date)})
             if old_obj:
                 all_slots.available_slots.remove(old_obj)
                 all_slots.available_slots.append(new_obj)
                 all_slots.save()
 
                 new_obj.user = check_user[0]
-                if getattr(self_slots, 'available_slots'):
+                if getattr(self_slots, 'available_slots', None):
                     self_slots.available_slots = [i for i in self_slots.available_slots
                                                   if i.start_time != old_obj.start_time]
                 self_slots.available_slots.append(new_obj)
                 self_slots.save()
             lo.release()
+            send_mail(new_obj, availability_date, [user_info.email, check_user[0].email])
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
