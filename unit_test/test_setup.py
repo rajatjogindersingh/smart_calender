@@ -16,6 +16,7 @@ class BasicTests(unittest.TestCase):
     def setUp(self):
         app.config.from_object(SmartCalenderTestConfig)
         mongo.connection.disconnect()
+        app.config['TESTING'] = True
         host = (app.config['HOST']).format(os.environ.get('db_user_name'), os.environ.get('db_password'))
         self.db = mongo.connect(username=os.environ.get('db_user_name'), password=os.environ.get('db_password'), host=host)
         self.app = app.test_client()

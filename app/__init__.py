@@ -9,8 +9,7 @@ import json
 
 app = Flask(__name__)
 app.config.from_object(SmartCalenderConfig)
-with app.app_context():
-    app.secret_key = os.urandom(24)
+app.config['SECRET_KEY'] = os.environ.get('secret_key')
 
 validate_jwt(app)
 

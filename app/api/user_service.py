@@ -67,7 +67,7 @@ class UserLoginService(Resource):
 
             token = jwt.encode({'email': post_data['email'],
                                 "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
-                               key=app.secret_key)
+                               key=app.config['SECRET_KEY'])
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
@@ -256,7 +256,8 @@ class BookUserSlot(Resource):
                 self_slots.available_slots.append(new_obj)
                 self_slots.save()
             lo.release()
-            send_mail(new_obj, availability_date, [user_info.email, check_user[0].email])
+            if not ('TESTING' in app.config and app.config['TESTING']):
+                send_mail(new_obj, availability_date, [user_info.email, check_user[0].email])
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 
