@@ -26,7 +26,9 @@ def start_registration():
         access_type='offline',
         # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
-    return redirect(authorization_url)
+    print(authorization_url)
+    return flask.Response(response=json.dumps({"message": "Added Successfully"}),
+                          status=200, content_type="application/json")
 
 
 @app.route('/api/register_credentials', methods=['GET'])
