@@ -27,6 +27,9 @@ def start_registration():
         # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
     print(authorization_url)
+    print(flow.redirect_uri)
+    with app.app_context():
+        app.state = state
     return flask.Response(response=json.dumps({"message": "Added Successfully"}),
                           status=200, content_type="application/json")
 
@@ -36,10 +39,11 @@ def register_credentials():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         'credentials.json',
         scopes=['https://www.googleapis.com/auth/drive.metadata.readonly'],
-        state=flask.request.args['state'])
+        state=app.state)
     flow.redirect_uri = os.environ.get('redirect_uris')
 
     authorization_response = flask.request.url
+    print(authorization_response)
     flow.fetch_token(authorization_response=authorization_response)
 
     # Store the credentials in the session.
