@@ -29,6 +29,7 @@ def start_registration():
     print(authorization_url)
     print(flow.redirect_uri)
     with app.app_context():
+        print("App state", state)
         app.state = state
     return flask.Response(response=json.dumps({"message": "Added Successfully"}),
                           status=200, content_type="application/json")
@@ -36,6 +37,7 @@ def start_registration():
 
 @app.route('/api/register_credentials', methods=['GET'])
 def register_credentials():
+    print(app.state)
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         'credentials.json',
         scopes=['https://www.googleapis.com/auth/drive.metadata.readonly'],
