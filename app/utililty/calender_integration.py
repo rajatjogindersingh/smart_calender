@@ -80,7 +80,7 @@ def send_mail(booking_slot: object, booking_date: object, user_objects: list):
             'client_id': app.credentials.client_id,
             'client_secret': app.credentials.client_secret,
             'scopes': app.credentials.scopes}
-        service = build('calendar', 'v2', credentials=credentials)
+        service = build('calendar', 'v3', credentials=credentials)
 
         event = service.events().insert(calendarId='primary', body=mail_body).execute()
         print(event)
