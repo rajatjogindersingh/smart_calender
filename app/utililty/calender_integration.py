@@ -7,6 +7,7 @@ from flask import redirect
 from app import app
 import flask
 import json
+import os
 
 
 # If modifying these scopes, delete the file token.pickle.
@@ -16,7 +17,7 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 @app.route('/api/start_registration', methods=['GET'])
 def start_registration():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('credentials.json', SCOPES)
-    flow.redirect_uri = 'https://demo-calender.herokuapp.com/api/register_credentials'
+    flow.redirect_uri = os.environ.get('redirect_uris')
     # Generate URL for request to Google's OAuth 2.0 server.
     # Use kwargs to set optional request parameters.
     authorization_url, state = flow.authorization_url(
@@ -34,7 +35,7 @@ def register_credentials():
         'credentials.json',
         scopes=['https://www.googleapis.com/auth/drive.metadata.readonly'],
         state=flask.request.args['state'])
-    flow.redirect_uri = 'https://demo-calender.herokuapp.com/api/register_credentials'
+    flow.redirect_uri = os.environ.get('redirect_uris')
 
     authorization_response = flask.request.url
     flow.fetch_token(authorization_response=authorization_response)
