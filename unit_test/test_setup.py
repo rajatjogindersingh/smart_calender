@@ -17,15 +17,16 @@ class BasicTests(unittest.TestCase):
         app.config.from_object(SmartCalenderTestConfig)
         mongo.connection.disconnect()
         app.config['TESTING'] = True
+        app.config['SECRET_KEY'] = 'some_secret_key'
         host = (app.config['HOST']).format(os.environ.get('db_user_name'), os.environ.get('db_password'))
         self.db = mongo.connect(username=os.environ.get('db_user_name'), password=os.environ.get('db_password'), host=host)
         self.app = app.test_client()
-        self.assertEqual(app.debug, False)
+        self.assertEqual(app.debug, True)
 
     # executed after each test
     def tearDown(self):
         print("tearing down")
-        self.db.drop_database(app.config["MONGO_DB_NAME"])
+        self.db.drop_database('test_calender')
         mongo.connection.disconnect()
 
     ###############
