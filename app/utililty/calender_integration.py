@@ -51,10 +51,6 @@ def register_credentials():
     # ACTION ITEM for developers:
     #     Store user's access and refresh tokens in your data store if
     #     incorporating this code into your real app.
-    file = open("flow_credentials.json", "w")
-    data = flow.credentials.to_json()
-    file.write(json.dumps(data))
-    file.close()
 
     with app.app_context():
         app.credentials = flow.credentials
@@ -77,11 +73,8 @@ def send_mail(booking_slot: object, booking_date: object, user_objects: list):
     mail_body['sendUpdates'] = 'all'
     mail_body['reminders'] = {'useDefault': False, 'overrides': [{'method': 'email', 'minutes': 60},
                                                                  {'method': 'popup', 'minutes': 10}]}
-    my_file = Path("flow_credentials.json")
-    if my_file.is_file():
-        with open("flow_credentials.json", "r") as data:
-            credentials = ast.literal_eval(data.read())
-        service = build('calendar', 'v3', credentials=credentials)
+    if getattr(app, 'credentials', None):
+        service = build('calendar', 'v3', credentials=app.credentials)
 
         event = service.events().insert(calendarId='primary', body=mail_body).execute()
         print(event)
