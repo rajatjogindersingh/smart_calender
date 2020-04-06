@@ -67,7 +67,7 @@ class UserLoginService(Resource):
 
             token = jwt.encode({'email': post_data['email'],
                                 "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
-                               key=app.config.get('SECRET_KEY'))
+                               key=app.secret_key)
         except Exception as e:
             return Response(response=json.dumps({"message": str(e)}), status=400, content_type="application/json")
 

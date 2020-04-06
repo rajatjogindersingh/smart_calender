@@ -22,7 +22,7 @@ def validate_jwt(app):
             if not msg:
 
                 try:
-                    payload = jwt.decode(auth_token, app.config.get('SECRET_KEY'))
+                    payload = jwt.decode(auth_token, app.secret_key)
                     email = payload['email']
                     user = User.objects(email=email)
 
