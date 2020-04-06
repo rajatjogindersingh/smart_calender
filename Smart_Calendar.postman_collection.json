@@ -1,0 +1,226 @@
+{
+	"info": {
+		"_postman_id": "e87544a9-a1cf-4a93-b864-ea8da61f6fac",
+		"name": "Smart_Calendar",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User Registration",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Rajat Singh\",\n\t\"email\": \"rajatsingh@gmail.com\",\n\t\"password\": \"qwerty\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/user_service/register",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"user_service",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "4c188ee6-3334-42a7-848a-43d1c910adbf",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"if(jsonData.token) {\r",
+							"    pm.globals.set(\"jwt-token\", jsonData.token);\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"rajat@gmail.com\",\n\t\"password\": \"qwerty\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/user_service/login",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"user_service",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mark availability",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt-token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"availability_date\":\"2020-04-03\",\n\t\"available_slots\": [\n\t{\n\t\t\"start_time\": \"19:00:00\",\n\t\t\"end_time\": \"20:00:00\"\n\t}]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/user_service/mark_available_slots",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"user_service",
+						"mark_available_slots"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Available Slot for a user",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt-token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/user_service/check_available_slots?email=rajatjogindersingh@gmail.com&date=2020-04-06",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"user_service",
+						"check_available_slots"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "rajatjogindersingh@gmail.com"
+						},
+						{
+							"key": "date",
+							"value": "2020-04-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Book a slot",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt-token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"rajatjogindersingh@gmail.com\",\n\t\"date\":\"2020-04-06\",\n\t\"slot\": {\n        \"end_time\": \"23:30:00\",\n        \"start_time\": \"23:00:00\"\n    },\n    \"summary\": \"Stand Up\",\n    \"description\": \"Daily discussion\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/user_service/book_slot",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"user_service",
+						"book_slot"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "To Start google Integration",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt-token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://demo-calender.herokuapp.com/api/start_registration",
+					"protocol": "https",
+					"host": [
+						"demo-calender",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"start_registration"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
