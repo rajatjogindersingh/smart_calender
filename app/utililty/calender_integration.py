@@ -53,6 +53,7 @@ def register_credentials():
     #     incorporating this code into your real app.
     with app.app_context():
         app.credentials = flow.credentials
+        print(flow.credentials)
     return flask.Response(response=json.dumps({"message": "Added Successfully"}),
                           status=200, content_type="application/json")
 
@@ -72,7 +73,6 @@ def send_mail(booking_slot: object, booking_date: object, user_objects: list):
     mail_body['reminders'] = {'useDefault': False, 'overrides': [{'method': 'email', 'minutes': 15},
                                                                  {'method': 'popup', 'minutes': 1}]}
     if app.credentials:
-
         credentials = {
             'token': app.credentials.token,
             'refresh_token': app.credentials.refresh_token,
