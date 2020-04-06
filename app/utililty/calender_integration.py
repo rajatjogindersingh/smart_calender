@@ -39,7 +39,7 @@ def start_registration():
 def register_credentials():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         'credentials.json',
-        scopes=['https://www.googleapis.com/auth/drive.metadata.readonly'],
+        scopes=SCOPES,
         state=flask.request.args['state'])
     flow.redirect_uri = os.environ.get('redirect_uris')
 
