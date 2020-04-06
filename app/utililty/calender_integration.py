@@ -1,42 +1,52 @@
 from __future__ import print_function
-import pickle
-import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 import datetime
+import google_auth_oauthlib.flow
+from flask import redirect
+from app import app
+import flask
+import json
+
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
-def main(event: dict):
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
-    creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0, open_browser=False)
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+@app.route('/api/start_registration', methods=['GET'])
+def start_registration():
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('credentials.json', SCOPES)
+    flow.redirect_uri = 'https://demo-calender.herokuapp.com/api/register_credentials'
+    # Generate URL for request to Google's OAuth 2.0 server.
+    # Use kwargs to set optional request parameters.
+    authorization_url, state = flow.authorization_url(
+        # Enable offline access so that you can refresh an access token without
+        # re-prompting the user for permission. Recommended for web server apps.
+        access_type='offline',
+        # Enable incremental authorization. Recommended as a best practice.
+        include_granted_scopes='true')
+    return redirect(authorization_url)
 
-    service = build('calendar', 'v3', credentials=creds)
 
-    event = service.events().insert(calendarId='primary', body=event).execute()
-    print('Event created: %s' % (event.get('htmlLink')))
+@app.route('/api/register_credentials', methods=['GET'])
+def register_credentials():
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        'credentials.json',
+        scopes=['https://www.googleapis.com/auth/drive.metadata.readonly'],
+        state=flask.request.args['state'])
+    flow.redirect_uri = 'https://demo-calender.herokuapp.com/api/register_credentials'
+
+    authorization_response = flask.request.url
+    flow.fetch_token(authorization_response=authorization_response)
+
+    # Store the credentials in the session.
+    # ACTION ITEM for developers:
+    #     Store user's access and refresh tokens in your data store if
+    #     incorporating this code into your real app.
+    with app.app_context():
+        app.credentials = flow.credentials
+    return flask.Response(response=json.dumps({"message": "Added Successfully"}),
+                          status=200, content_type="application/json")
 
 
 def send_mail(booking_slot: object, booking_date: object, user_objects: list):
@@ -53,4 +63,18 @@ def send_mail(booking_slot: object, booking_date: object, user_objects: list):
     mail_body['sendUpdates'] = 'all'
     mail_body['reminders'] = {'useDefault': False, 'overrides': [{'method': 'email', 'minutes': 15},
                                                                  {'method': 'popup', 'minutes': 1}]}
-    main(mail_body)
+    if app.credentials:
+
+        credentials = {
+            'token': app.credentials.token,
+            'refresh_token': app.credentials.refresh_token,
+            'token_uri': app.credentials.token_uri,
+            'client_id': app.credentials.client_id,
+            'client_secret': app.credentials.client_secret,
+            'scopes': app.credentials.scopes}
+        service = build('calendar', 'v2', credentials=credentials)
+
+        event = service.events().insert(calendarId='primary', body=mail_body).execute()
+        print(event)
+    else:
+        print("Failed to connect to google")

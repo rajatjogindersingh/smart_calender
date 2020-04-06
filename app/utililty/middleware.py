@@ -4,7 +4,7 @@ import json
 from app.model.user import User
 
 
-exception_from_jwt = ['login', 'register']
+exception_from_jwt = ['login', 'register', 'register_credentials']
 
 
 def validate_jwt(app):

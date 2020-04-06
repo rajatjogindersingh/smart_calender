@@ -17,8 +17,10 @@ my_file = Path("credentials.json")
 if not my_file.is_file():
     file = open("credentials.json", "w")
     cred = app.config['GOOGLE_JSON']
-    cred['installed']['client_id'] = os.environ.get('client_id')
-    cred['installed']['project_id'] = os.environ.get('project_id')
+    cred['web']['client_id'] = os.environ.get('client_id')
+    cred['web']['project_id'] = os.environ.get('project_id')
+    cred['web']['client_secret'] = os.environ.get('client_secret')
+    cred['web']['redirect_uris'] = [os.environ.get('redirect_uris')]
     file.write(json.dumps(cred))
     file.close()
 
