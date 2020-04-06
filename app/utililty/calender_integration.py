@@ -70,10 +70,10 @@ def send_mail(booking_slot: object, booking_date: object, user_objects: list):
     mail_body['sendUpdates'] = 'all'
     mail_body['reminders'] = {'useDefault': False, 'overrides': [{'method': 'email', 'minutes': 60},
                                                                  {'method': 'popup', 'minutes': 10}]}
-    if app.credentials:
+    if getattr(app, 'credentials', None):
         service = build('calendar', 'v3', credentials=app.credentials)
 
         event = service.events().insert(calendarId='primary', body=mail_body).execute()
         print(event)
     else:
-        print("Failed to connect to google")
+        raise Exception('Created entry in calender but failed to call google as Calender session has expired')
