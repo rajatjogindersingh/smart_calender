@@ -53,7 +53,7 @@ def register_credentials():
     #     incorporating this code into your real app.
     with app.app_context():
         app.credentials = flow.credentials
-        print(flow.credentials)
+        print(dir(flow.credentials))
     return flask.Response(response=json.dumps({"message": "Added Successfully"}),
                           status=200, content_type="application/json")
 
