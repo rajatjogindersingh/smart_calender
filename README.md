@@ -2,7 +2,7 @@
 
 Using Flask to build Restful API's for Smart Calender. Using these API's you can register, login, check ,mark and book availability depending on schedule of other person. Also have integrated with JWT token based Authentication.
 
-#Setup
+# Setup
 The pre-requisite for this is Python 3.6 or above should be available in your machine.
  
 To setup these application in your local environment (Windows), you can following commands - 
